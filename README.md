@@ -39,8 +39,6 @@ python3 -m venv venv
 
 # Activate virtual environment
 source venv/bin/activate  # On macOS/Linux
-# or
-venv\Scripts\activate  # On Windows
 
 # Install dependencies
 pip install -r requirements.txt
@@ -59,8 +57,6 @@ First, verify that you have Python installed:
 
 ```bash
 python3 --version
-# or on Windows
-python --version
 ```
 
 You should see output like `Python 3.x.x`. If not, [download Python](https://www.python.org/downloads/).
@@ -73,9 +69,6 @@ Navigate to your project directory and create a virtual environment:
 # On macOS/Linux
 # -m venv 表示使用 Python 的 venv 模块来创建一个虚拟环境（virtual environment）。
 python3 -m venv venv
-
-# On Windows
-python -m venv venv
 ```
 
 This creates a `venv` directory containing an isolated Python environment.
@@ -86,21 +79,6 @@ This creates a `venv` directory containing an isolated Python environment.
 ```bash
 source venv/bin/activate
 ```
-
-**Windows (Command Prompt):**
-```cmd
-venv\Scripts\activate
-```
-
-**Windows (PowerShell):**
-```powershell
-venv\Scripts\Activate.ps1
-```
-
-> **Note:** If you encounter a PowerShell execution policy error, run:
-> ```powershell
-> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-> ```
 
 When activated, you'll see `(venv)` prefix in your terminal prompt.
 
@@ -167,6 +145,36 @@ python manage.py runserver
 
 ---
 
+## ⚡ FastAPI 核心组件
+
+**Starlette：高性能 ASGI 框架**  
+FastAPI 基于 Starlette，因此同时继承了 Starlette 提供的异步请求处理、WebSocket 支持、中间件系统和依赖注入等特性。要自定义更底层的行为（例如挂载额外的 ASGI 应用或编写自定义中间件），可以直接使用 FastAPI 实例的 `.add_middleware()`、`.mount()` 等方法，它们与 Starlette 保持兼容。
+
+**Pydantic：飞快的数据校验与序列化**  
+FastAPI 中的请求体、查询参数和响应模型均由 Pydantic 驱动。通过声明 `BaseModel` 子类，你可以让 FastAPI 自动完成类型转换、默认值填充和输入校验，并在响应时生成结构化数据。例如：
+
+```python
+from pydantic import BaseModel
+from fastapi import FastAPI
+
+app = FastAPI()
+
+
+class Item(BaseModel):
+    name: str
+    price: float
+    tags: list[str] = []
+
+
+@app.post("/items")
+async def create_item(item: Item):
+    return item  # FastAPI 自动使用 Pydantic 序列化响应
+```
+
+> 提示：当你的模型或验证逻辑更复杂时，可以利用 Pydantic 的校验器（`@field_validator`）或模型配置（`model_config`）来精细控制输入输出格式。
+
+---
+
 ## 💻 Development Workflow
 
 ### 1. Save Your Dependencies
@@ -222,7 +230,6 @@ __pycache__/
 
 # OS
 .DS_Store
-Thumbs.db
 ```
 
 ---
@@ -231,9 +238,8 @@ Thumbs.db
 
 ### Virtual Environment Not Activating
 
-- **Windows PowerShell:** Check execution policy (see activation section)
 - **Path Issues:** Ensure you're in the correct directory
-- **Permissions:** Run terminal as administrator if needed
+- **Permissions:** Use `sudo` for commands that require elevated rights
 
 ### Package Installation Fails
 
@@ -260,7 +266,7 @@ python3.10 -m venv venv
 
 - Ensure Python is in your system PATH
 - Try using `python` instead of `python3` (or vice versa)
-- Reinstall Python and check "Add to PATH" during installation
+- If using the official installer, add the Python binary to your shell profile (`~/.zshrc`, `~/.bashrc`, etc.)
 
 ---
 
@@ -273,18 +279,5 @@ python3.10 -m venv venv
 
 ---
 
-## 📝 License
-
-[Specify your license here]
-
-## 🤝 Contributing
-
-[Add contribution guidelines if applicable]
-
-## 📧 Contact
-
-[Add contact information or links]
-
----
 
 **Happy Coding! 🎉**
