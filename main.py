@@ -1,10 +1,15 @@
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import Depends, FastAPI, Path, status, HTTPException, Header
+from fastapi.security import OAuth2PasswordRequestForm
+import jwt
 from pydantic import BaseModel
 import uvicorn
 from enum import Enum
 
-app = FastAPI()
+app = FastAPI(title="My FastAPI learning Project", version="1.0", docs_url="/ui")
+KEY = "PASSWORD"
+ALGO = "HS256"
 
 async def verify_auth(api_token: Optional[str]=Header(None, alias="api-token")):
 	if not api_token:
@@ -25,6 +30,10 @@ class UserIn(UserModel):
 
 class UserOut(UserModel):
 	...
+
+class Token(BaseModel):
+	access_token: str
+	token_type: str
 	
 # @app.get("/users/current")
 # async def get_current_user():
@@ -76,6 +85,29 @@ async def get_user(username: str = Path(..., title="User name", min_length=4)):
 # 		"page index": f"{page_index}",
 # 		"page size": f"{page_size}"
 # 	}
+
+def validate_user(username: str, password: str):
+	if username == "tony" and password == "111":
+		return username
+	return None
+
+@app.post("/token")
+async def login(login_form: OAuth2PasswordRequestForm= Depends()):
+	username = validate_user(login_form.username, login_form.password)
+	if not username:
+		raise HTTPException(
+			status_code=status.HTTP_401_UNAUTHORIZED, 
+			detail="incorrect username or password", 
+			headers={"www-authenticate": "Bearer"}) 
+
+	token_expires = datetime.now(timezone.utc) + timedelta(minutes=300)
+	token_data = {
+		"username": username,
+		"exp": token_expires
+	}
+	token = jwt.encode(token_data, KEY, ALGO)
+	print(f"token->{token}")
+	return Token(access_token=token, token_type="bearer")
 
 if __name__ == "__main__":
 	uvicorn.run("main:app", reload=True)
